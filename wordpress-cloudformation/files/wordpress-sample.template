@@ -1,0 +1,96 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "AWS CloudFormation Sample Template for WordPress site.",
+    "Parameters": {
+        "KeyName": {
+            "Description" : "EC2 key pair",
+            "Type": "AWS::EC2::KeyPair::KeyName"
+        },
+        "InstanceType" : {
+            "Description" : "EC2 instance type",
+            "Type" : "String"
+        }
+    },
+    "Resources": {
+        "VPC": {
+            "Type": "AWS::EC2::VPC",
+            "Properties": { "CidrBlock": "10.0.0.0/24" }
+        },
+        "Subnet": {
+            "Type": "AWS::EC2::Subnet",
+            "Properties": {
+                "VpcId": { "Ref": "VPC"},
+                "CidrBlock": "10.0.0.0/24",
+                "MapPublicIpOnLaunch" : "true"
+            }
+        },
+        "Gateway": {
+            "Type": "AWS::EC2::InternetGateway"
+        },
+        "GatewayAttachment": {
+            "Type": "AWS::EC2::VPCGatewayAttachment",
+            "Properties": {
+                "VpcId": { "Ref": "VPC"},
+                "InternetGatewayId": { "Ref": "Gateway" }
+            }
+        },
+        "RouteTable": {
+            "Type": "AWS::EC2::RouteTable",
+            "Properties": {
+                "VpcId": { "Ref": "VPC" }
+            }
+        },
+        "PublicRoute": {
+            "Type": "AWS::EC2::Route",
+            "Properties": {
+                "RouteTableId": { "Ref": "RouteTable" },
+                "DestinationCidrBlock": "0.0.0.0/0",
+                "GatewayId": { "Ref": "Gateway" }
+            }
+        },
+        "SubnetRouteTableAssociation": {
+            "Type": "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties": {
+                "SubnetId": { "Ref": "Subnet" },
+                "RouteTableId": { "Ref": "RouteTable" }
+            }
+        },
+        "InstanceSecurityGroup": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "GroupDescription": "Security group",
+                "VpcId": { "Ref": "VPC"},
+                "SecurityGroupIngress": [
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "80",
+                        "ToPort": "80",
+                        "CidrIp": "0.0.0.0/0"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "22",
+                        "ToPort": "22",
+                        "CidrIp": "0.0.0.0/0"
+                    }
+                ]
+            }
+        },
+        "WebApp": {
+            "Type": "AWS::EC2::Instance",
+            "Properties": {
+                "ImageId": "ami-fce3c696",
+                "InstanceType": { "Ref": "InstanceType" },
+                "KeyName": { "Ref": "KeyName" },
+                "SecurityGroupIds" : [ { "Ref" : "InstanceSecurityGroup" } ],
+                "SubnetId": { "Ref": "Subnet" }
+            }
+        }
+    },
+    "Outputs": {
+        "IP": {
+            "Description": "The IP address for the EC2 instance in our VPC",
+            "Value" : { "Fn::GetAtt" : [ "WebApp", "PublicIp" ] }
+        }
+    }
+}
