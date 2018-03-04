@@ -89,7 +89,7 @@
     },
     "Outputs": {
         "IP": {
-            "Description": "The IP address for the EC2 instance in our VPC",
+            "Description": "IP address for the EC2 instance in VPC is: ",
             "Value" : { "Fn::GetAtt" : [ "WebApp", "PublicIp" ] }
         }
     }
